@@ -1,5 +1,5 @@
 /* eslint-disable react/destructuring-assignment */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { connect } from "react-redux";
 import { bindActionCreators } from "redux";
 import {
@@ -13,18 +13,9 @@ import {
 } from "@material-ui/core";
 import { injectIntl, FormattedMessage } from "react-intl";
 import { withTheme, withStyles } from "@material-ui/core/styles";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-} from "recharts";
+
+import Chart from "chart.js/dist/Chart.js";
+
 import { fetchIndicators } from "../actions";
 import { MODULE_NAME } from "../constants";
 
@@ -36,8 +27,9 @@ const styles = (theme) => ({
     borderRadius: 16,
     boxShadow: "0 3px 6px rgba(0,0,0,0.1)",
   },
-  chartContainer: {
+  chartBox: {
     height: 300,
+    position: "relative",
   },
   summaryCard: {
     textAlign: "center",
@@ -49,44 +41,57 @@ const styles = (theme) => ({
 
 const COLORS = ["#1976d2", "#0288d1", "#26a69a", "#7cb342", "#f9a825", "#ef5350"];
 
-const DashboardPage = ({ intl, classes, fetchIndicators, indicators, fetchingIndicators }) => {
+function DashboardPage({
+  intl,
+  classes,
+  fetchIndicators,
+  indicators,
+  fetchingIndicators,
+}) {
   const [dataByModule, setDataByModule] = useState([]);
   const [dataByMethod, setDataByMethod] = useState([]);
   const [summary, setSummary] = useState({ total: 0, auto: 0, manual: 0 });
 
+  // Refs Chart.js (important !)
+  const barChartRef = useRef();
+  const pieChartRef = useRef();
+  let barChart = useRef(null);
+  let pieChart = useRef(null);
+
+  /** === Fetch initial === */
   useEffect(() => {
     fetchIndicators();
   }, [fetchIndicators]);
 
+  /** === Préparation des données === */
   useEffect(() => {
     if (!indicators) return;
 
-    // Regroupement par module
+    // Par module
     const moduleCounts = {};
     indicators.forEach((ind) => {
       const mod = ind.module || "Autre";
       moduleCounts[mod] = (moduleCounts[mod] || 0) + 1;
     });
 
-    // Regroupement par méthode
+    setDataByModule(
+      Object.entries(moduleCounts).map(([module, count]) => ({
+        module,
+        count,
+      }))
+    );
+
+    // Par méthode
     const methodCounts = { AUTOMATIC: 0, MANUAL: 0 };
     indicators.forEach((ind) => {
       const method = ind.method?.toUpperCase() || "AUTOMATIC";
-      if (methodCounts[method] !== undefined) {
-        methodCounts[method] += 1;
-      }
+      if (methodCounts[method] !== undefined) methodCounts[method] += 1;
     });
 
-    setDataByModule(
-      Object.entries(moduleCounts).map(([module, count]) => ({ module, count })),
-    );
-
-    setDataByMethod(
-      Object.entries(methodCounts).map(([method, count]) => ({
-        name: method === "AUTOMATIC" ? "Automatique" : "Manuel",
-        value: count,
-      })),
-    );
+    setDataByMethod([
+      { name: "Automatique", value: methodCounts.AUTOMATIC },
+      { name: "Manuel", value: methodCounts.MANUAL },
+    ]);
 
     setSummary({
       total: indicators.length,
@@ -94,6 +99,52 @@ const DashboardPage = ({ intl, classes, fetchIndicators, indicators, fetchingInd
       manual: methodCounts.MANUAL,
     });
   }, [indicators]);
+
+  /** === Render Chart.js === */
+  useEffect(() => {
+    if (!barChartRef.current || !pieChartRef.current) return;
+
+    /** 🔹 BAR CHART : Indicateurs par module */
+    if (barChart.current) barChart.current.destroy();
+    barChart.current = new Chart(barChartRef.current, {
+      type: "bar",
+      data: {
+        labels: dataByModule.map((d) => d.module),
+        datasets: [
+          {
+            label: "Nombre d'indicateurs",
+            data: dataByModule.map((d) => d.count),
+            backgroundColor: "#1976d2",
+            borderColor: "#0d47a1",
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      },
+    });
+
+    /** 🔹 PIE CHART : Répartition par méthode */
+    if (pieChart.current) pieChart.current.destroy();
+    pieChart.current = new Chart(pieChartRef.current, {
+      type: "pie",
+      data: {
+        labels: dataByMethod.map((d) => d.name),
+        datasets: [
+          {
+            data: dataByMethod.map((d) => d.value),
+            backgroundColor: COLORS.slice(0, dataByMethod.length),
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+      },
+    });
+  }, [dataByModule, dataByMethod]);
 
   return (
     <div className={classes.root}>
@@ -111,7 +162,7 @@ const DashboardPage = ({ intl, classes, fetchIndicators, indicators, fetchingInd
         </Grid>
       ) : (
         <Grid container spacing={3}>
-          {/* Résumé global */}
+          {/* === Résumé global === */}
           <Grid item xs={12} md={4}>
             <Card className={classes.summaryCard}>
               <Typography variant="h6">
@@ -122,87 +173,48 @@ const DashboardPage = ({ intl, classes, fetchIndicators, indicators, fetchingInd
               </Typography>
             </Card>
           </Grid>
+
           <Grid item xs={12} md={4}>
             <Card className={classes.summaryCard}>
               <Typography variant="h6">
-                <FormattedMessage id="dashboard.autoIndicators" defaultMessage="Automatiques" />
+                Automatiques
               </Typography>
               <Typography variant="h3" style={{ color: "#0288d1" }}>
                 {summary.auto}
               </Typography>
             </Card>
           </Grid>
+
           <Grid item xs={12} md={4}>
             <Card className={classes.summaryCard}>
-              <Typography variant="h6">
-                <FormattedMessage id="dashboard.manualIndicators" defaultMessage="Manuels" />
-              </Typography>
+              <Typography variant="h6">Manuels</Typography>
               <Typography variant="h3" style={{ color: "#7cb342" }}>
                 {summary.manual}
               </Typography>
             </Card>
           </Grid>
 
-          {/* Graphique par module */}
+          {/* === Graphique Bar : Modules === */}
           <Grid item xs={12} md={8}>
             <Card className={classes.card}>
-              <CardHeader
-                title={
-                  <FormattedMessage
-                    id="dashboard.indicatorsByModule"
-                    defaultMessage="Indicateurs par module"
-                  />
-                }
-              />
+              <CardHeader title="Indicateurs par module" />
               <Divider />
               <CardContent>
-                <div className={classes.chartContainer}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dataByModule}>
-                      <XAxis dataKey="module" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="count" fill="#1976d2" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className={classes.chartBox}>
+                  <canvas ref={barChartRef} />
                 </div>
               </CardContent>
             </Card>
           </Grid>
 
-          {/* Graphique par méthode */}
+          {/* === Graphique Pie : Méthodes === */}
           <Grid item xs={12} md={4}>
             <Card className={classes.card}>
-              <CardHeader
-                title={
-                  <FormattedMessage
-                    id="dashboard.indicatorsByMethod"
-                    defaultMessage="Répartition par méthode de calcul"
-                  />
-                }
-              />
+              <CardHeader title="Répartition par méthode" />
               <Divider />
               <CardContent>
-                <div className={classes.chartContainer}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={dataByMethod}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label
-                      >
-                        {dataByMethod.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                <div className={classes.chartBox}>
+                  <canvas ref={pieChartRef} />
                 </div>
               </CardContent>
             </Card>
@@ -211,7 +223,7 @@ const DashboardPage = ({ intl, classes, fetchIndicators, indicators, fetchingInd
       )}
     </div>
   );
-};
+}
 
 const mapStateToProps = (state) => ({
   fetchingIndicators: state.monitoringEvaluation.fetchingIndicators,
@@ -223,9 +235,9 @@ const mapDispatchToProps = (dispatch) =>
     {
       fetchIndicators,
     },
-    dispatch,
+    dispatch
   );
 
 export default injectIntl(
-  withTheme(withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage))),
+  withTheme(withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(DashboardPage)))
 );

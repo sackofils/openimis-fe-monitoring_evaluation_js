@@ -9,39 +9,54 @@ import {
   ControlledField,
   formatMessage,
 } from "@openimis/fe-core";
-import { injectIntl } from "react-intl";
+import { injectIntl, FormattedMessage } from "react-intl";
+import { withTheme, withStyles } from "@material-ui/core/styles";
+
 import {
   MODULE_NAME,
-  CALCULATION_METHOD,
-  INDICATOR_STATUS,
 } from "../constants";
 
 const styles = (theme) => ({
-  form: {
-    padding: 0,
-  },
-  item: {
-    padding: theme.spacing(1),
-  },
+  form: { padding: 0 },
+  item: { padding: theme.spacing(1) },
 });
 
 class IndicatorFilter extends Component {
   debouncedOnChangeFilter = _debounce(
     this.props.onChangeFilters,
-    this.props.modulesManager.getConf(MODULE_NAME, "debounceTime", 800),
+    this.props.modulesManager.getConf(MODULE_NAME, "debounceTime", 500)
   );
 
-  _filterValue = (k) => {
+  _filterValue = (key) => {
     const { filters } = this.props;
-    return filters && filters[k] ? filters[k].value : null;
+    return filters && filters[key] ? filters[key].value : null;
   };
 
+  _textFilter = (id, v) => ({
+    id,
+    value: v,
+    filter: `${id}_Icontains: "${v}"`,
+  });
+
+  _enumFilter = (id, v) => ({
+    id,
+    value: v,
+    filter: v ? `${id}: ${v}` : null,
+  });
+
+  _dateFilter = (id, op, v) => ({
+    id,
+    value: v,
+    filter: v ? `${id}_${op}: "${v}"` : null,
+  });
+
   render() {
-    const { classes, filters, onChangeFilters, intl } = this.props;
+    const { classes, intl } = this.props;
 
     return (
       <Grid container className={classes.form}>
-        {/* --- Code --- */}
+
+        {/* Code */}
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.code"
@@ -52,16 +67,14 @@ class IndicatorFilter extends Component {
                 label={formatMessage(intl, MODULE_NAME, "indicator.code")}
                 value={this._filterValue("code")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([
-                    { id: "code", value: v, filter: `code_Icontains: "${v}"` },
-                  ])
+                  this.debouncedOnChangeFilter([this._textFilter("code", v)])
                 }
               />
             </Grid>
           }
         />
 
-        {/* --- Label --- */}
+        {/* Label */}
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.label"
@@ -72,104 +85,130 @@ class IndicatorFilter extends Component {
                 label={formatMessage(intl, MODULE_NAME, "indicator.label")}
                 value={this._filterValue("label")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([
-                    { id: "label", value: v, filter: `label_Icontains: "${v}"` },
-                  ])
+                  this.debouncedOnChangeFilter([this._textFilter("label", v)])
                 }
               />
             </Grid>
           }
         />
 
-        {/* --- Module --- */}
+        {/* Type */}
+        <ControlledField
+          module={MODULE_NAME}
+          id="indicatorFilter.type"
+          field={
+            <Grid item xs={3} className={classes.item}>
+              <PublishedComponent
+                pubRef="monitoringEvaluation.IndicatorTypePicker"
+                withNull
+                label="indicator.type"
+                value={this._filterValue("type")}
+                onChange={(v) =>
+                  this.debouncedOnChangeFilter([this._textFilter("type", v)])
+                }
+              />
+            </Grid>
+          }
+        />
+
+        {/* Frequency */}
+        <ControlledField
+          module={MODULE_NAME}
+          id="indicatorFilter.frequency"
+          field={
+            <Grid item xs={3} className={classes.item}>
+              <PublishedComponent
+                pubRef="monitoringEvaluation.FrequencyPicker"
+                withNull
+                label="indicator.frequency"
+                value={this._filterValue("frequency")}
+                onChange={(v) =>
+                  this.debouncedOnChangeFilter([this._textFilter("frequency", v)])
+                }
+              />
+            </Grid>
+          }
+        />
+
+        {/* Module */}
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.module"
           field={
             <Grid item xs={3} className={classes.item}>
-              <TextInput
-                module={MODULE_NAME}
-                label={formatMessage(intl, MODULE_NAME, "indicator.module")}
+              <PublishedComponent
+                pubRef="monitoringEvaluation.ModulePicker"
+                withNull
+                label="indicator.module"
                 value={this._filterValue("module")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([
-                    { id: "module", value: v, filter: `module_Icontains: "${v}"` },
-                  ])
+                  this.debouncedOnChangeFilter([this._textFilter("module", v)])
                 }
               />
             </Grid>
           }
         />
 
-        {/* --- Méthode (Automatique / Manuelle) --- */}
+        {/* Unit */}
+        <ControlledField
+          module={MODULE_NAME}
+          id="indicatorFilter.unit"
+          field={
+            <Grid item xs={3} className={classes.item}>
+              <PublishedComponent
+                pubRef="monitoringEvaluation.UnitPicker"
+                withNull
+                label="indicator.unit"
+                value={this._filterValue("unit")}
+                onChange={(v) =>
+                  this.debouncedOnChangeFilter([this._textFilter("unit", v)])
+                }
+              />
+            </Grid>
+          }
+        />
+
+        {/* Calculation method */}
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.method"
           field={
             <Grid item xs={3} className={classes.item}>
-              <FormControl fullWidth>
-                <InputLabel>
-                  {formatMessage(intl, MODULE_NAME, "indicator.method")}
-                </InputLabel>
-                <Select
-                  value={this._filterValue("method") || ""}
-                  onChange={(e) =>
-                    this.debouncedOnChangeFilter([
-                      { id: "method", value: e.target.value, filter: `method: "${e.target.value}"` },
-                    ])
-                  }
-                >
-                  <MenuItem value="">
-                    <em>
-                      {formatMessage(intl, MODULE_NAME, "filter.all", "All")}
-                    </em>
-                  </MenuItem>
-                  {CALCULATION_METHOD.map((m) => (
-                    <MenuItem key={m} value={m}>
-                      <FormattedMessage module={MODULE_NAME} id={`indicator.${m.toLowerCase()}`} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <PublishedComponent
+                pubRef="monitoringEvaluation.CalculationMethodPicker"
+                withNull
+                label="indicator.method"
+                value={this._filterValue("method")}
+                onChange={(v) =>
+                  this.debouncedOnChangeFilter([this._textFilter("method", v)])
+                }
+              />
             </Grid>
           }
         />
 
-        {/* --- Statut --- */}
+        {/* Status */}
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.status"
           field={
             <Grid item xs={3} className={classes.item}>
-              <FormControl fullWidth>
-                <InputLabel>
-                  {formatMessage(intl, MODULE_NAME, "indicator.status")}
-                </InputLabel>
-                <Select
-                  value={this._filterValue("status") || ""}
-                  onChange={(e) =>
-                    this.debouncedOnChangeFilter([
-                      { id: "status", value: e.target.value, filter: `status: "${e.target.value}"` },
-                    ])
-                  }
-                >
-                  <MenuItem value="">
-                    <em>
-                      {formatMessage(intl, MODULE_NAME, "filter.all", "All")}
-                    </em>
-                  </MenuItem>
-                  {INDICATOR_STATUS.map((s) => (
-                    <MenuItem key={s} value={s}>
-                      <FormattedMessage module={MODULE_NAME} id={`indicator.${s.toLowerCase()}`} />
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <PublishedComponent
+                pubRef="monitoringEvaluation.IndicatorStatusPicker"
+                withNull
+                label="indicator.status"
+                value={this._filterValue("status")}
+                onChange={(v) =>
+                  this.debouncedOnChangeFilter([this._textFilter("status", v)])
+                }
+              />
             </Grid>
           }
         />
 
-        {/* --- Période (Date début) --- */}
+
+
+        {/* Période début */}
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.periodStart"
@@ -178,11 +217,11 @@ class IndicatorFilter extends Component {
               <PublishedComponent
                 pubRef="core.DatePicker"
                 module={MODULE_NAME}
-                label={formatMessage(intl, MODULE_NAME, "indicator.periodStart", "Period start")}
+                label={formatMessage(intl, MODULE_NAME, "indicator.periodStart")}
                 value={this._filterValue("periodStart")}
                 onChange={(v) =>
                   this.debouncedOnChangeFilter([
-                    { id: "periodStart", value: v, filter: `periodStart_Gte: "${v}"` },
+                    this._dateFilter("periodStart", "Gte", v),
                   ])
                 }
               />
@@ -190,7 +229,7 @@ class IndicatorFilter extends Component {
           }
         />
 
-        {/* --- Période (Date fin) --- */}
+        {/* Période fin */}
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.periodEnd"
@@ -199,11 +238,11 @@ class IndicatorFilter extends Component {
               <PublishedComponent
                 pubRef="core.DatePicker"
                 module={MODULE_NAME}
-                label={formatMessage(intl, MODULE_NAME, "indicator.periodEnd", "Period end")}
+                label={formatMessage(intl, MODULE_NAME, "indicator.periodEnd")}
                 value={this._filterValue("periodEnd")}
                 onChange={(v) =>
                   this.debouncedOnChangeFilter([
-                    { id: "periodEnd", value: v, filter: `periodEnd_Lte: "${v}"` },
+                    this._dateFilter("periodEnd", "Lte", v),
                   ])
                 }
               />
@@ -215,4 +254,6 @@ class IndicatorFilter extends Component {
   }
 }
 
-export default withModulesManager(injectIntl(IndicatorFilter));
+export default withModulesManager(
+  injectIntl(withTheme(withStyles(styles)(IndicatorFilter)))
+);

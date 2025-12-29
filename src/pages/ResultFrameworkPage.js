@@ -39,14 +39,14 @@ const styles = (theme) => ({
   },
 });
 
-class IndicatorsPage extends Component {
+class ResultFrameworkPage extends Component {
   onDoubleClick = (indicator, newTab = false) => {
     const routeParams = ["monitoringEvaluation.route.detailIndicator", [decodeId(indicator.id)]];
     historyPush(this.props.modulesManager, this.props.history, ...routeParams, newTab);
   };
 
   handleAddIndicator = () => {
-    const routeParams = ["monitoringEvaluation.route.addIndicator", ["pip"]];
+    const routeParams = ["monitoringEvaluation.route.addIndicator", ["rf"]];
     historyPush(this.props.modulesManager, this.props.history, ...routeParams);
   };
 
@@ -57,7 +57,7 @@ class IndicatorsPage extends Component {
       <div className={classes.page}>
         <IndicatorSearcher
           cacheFiltersKey="indicatorPageFiltersCache"
-          category="PIP"
+          category="RESULT_FRAMEWORK"
           onDoubleClick={this.onDoubleClick}
         />
 
@@ -80,7 +80,7 @@ const mapStateToProps = (state) => ({
 export default injectIntl(
   withModulesManager(
     withHistory(
-      connect(mapStateToProps)(withTheme(withStyles(styles)(IndicatorsPage)))
+      connect(mapStateToProps)(withTheme(withStyles(styles)(ResultFrameworkPage)))
     )
   )
 );

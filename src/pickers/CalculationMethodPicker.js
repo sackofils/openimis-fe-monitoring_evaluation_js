@@ -1,34 +1,22 @@
-/* eslint-disable react/destructuring-assignment */
-import React from "react";
-import { injectIntl } from "react-intl";
-import { SelectInput } from "@openimis/fe-core";
-import { MODULE_NAME } from "../constants";
+/* eslint-disable react/jsx-props-no-spreading */
+import React, { Component } from 'react';
+import { ConstantBasedPicker } from '@openimis/fe-core';
 
-const CalculationMethodPicker = (props) => {
-  const { intl, value, onChange, readOnly, withNull = true } = props;
+import { CALCULATION_METHODS, MODULE_NAME } from '../constants';
 
-  const options = [
-    {
-      value: "MANUAL",
-      label: intl.formatMessage({ id: `${MODULE_NAME}.calculationMethod.manual`, defaultMessage: "Manuel" }),
-    },
-    {
-      value: "AUTOMATIC",
-      label: intl.formatMessage({ id: `${MODULE_NAME}.calculationMethod.automatic`, defaultMessage: "Automatique" }),
-    },
-  ];
+class CalculationMethodPicker extends Component {
+  render() {
+    const { intl, readOnly = false } = this.props;
 
-  return (
-    <SelectInput
-      module={MODULE_NAME}
-      label={intl.formatMessage({ id: `${MODULE_NAME}.indicator.method`, defaultMessage: "Méthode de calcul" })}
-      options={options}
-      value={value}
-      onChange={onChange}
-      readOnly={readOnly}
-      withNull={withNull}
-    />
-  );
-};
+    return (
+      <ConstantBasedPicker
+        constants={CALCULATION_METHODS}
+        readOnly={readOnly}
+        {...this.props}
+      />
+    );
+  }
+}
 
-export default injectIntl(CalculationMethodPicker);
+export default CalculationMethodPicker;
+

@@ -2,34 +2,13 @@
  * === CONSTANTS: Monitoring & Evaluation ===
  */
 
-// === Statuts des indicateurs ===
-export const INDICATOR_STATUSES = {
-  DRAFT: "DRAFT",
-  ACTIVE: "ACTIVE",
-  INACTIVE: "INACTIVE",
-  ARCHIVED: "ARCHIVED",
-};
-
-export const INDICATOR_STATUS = [
-  INDICATOR_STATUSES.DRAFT,
-  INDICATOR_STATUSES.ACTIVE,
-  INDICATOR_STATUSES.INACTIVE,
-  INDICATOR_STATUSES.ARCHIVED,
-];
-
-// === Méthodes de calcul des indicateurs ===
-export const CALCULATION_METHODS = {
-  AUTOMATIC: "AUTOMATIC",
-  MANUAL: "MANUAL",
-};
-
-export const CALCULATION_METHOD = [
-  CALCULATION_METHODS.AUTOMATIC,
-  CALCULATION_METHODS.MANUAL,
-];
-
 // === Types d’indicateur ===
-export const INDICATOR_TYPES = ["Quantitative", "Qualitative", "Composite"];
+export const CALCULATION_METHODS = ["MANUEL", "AUTOMATIQUE"];
+export const INDICATOR_STATUSES = ["BROUILLON", "ACTIVE", "INACTIVE", "ARCHIVE"];
+export const INDICATOR_TYPES = ["QUANTITATIVE", "QUALITATIVE", "COMPOSITE"];
+export const FREQUENCY_TYPES = ["Une fois", "2 fois", "3 fois", "Mensuel", "Trimestriel", "Semestriel", "Annuel"];
+export const UNIT_TYPES = ["GNF", "Nombre", "Pourcentage", "Oui/Non"];
+export const MODULE_TYPES = ["individual", "social_protection", "grievance_social_protection"];
 
 // === Droits d’accès (à aligner avec le backend) ===
 export const RIGHT_MONITORING = 128000;

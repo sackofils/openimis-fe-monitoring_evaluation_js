@@ -18,21 +18,18 @@ import {
 } from "@material-ui/core";
 import { Save } from "@material-ui/icons";
 import {
-  TextInput,
-  journalize,
-  withModulesManager,
+    TextInput,
+    journalize,
+    withHistory,
+    withModulesManager,
+    formatMessage,
+    PublishedComponent,
+    ControlledField
 } from "@openimis/fe-core";
-import {
-  createIndicator,
-  updateIndicator,
-} from "../actions";
+
+import { createIndicator, updateIndicator } from "../actions";
 import {
   MODULE_NAME,
-  EMPTY_STRING,
-  CALCULATION_METHODS,
-  CALCULATION_METHOD,
-  INDICATOR_STATUS,
-  INDICATOR_TYPES,
 } from "../constants";
 
 const styles = (theme) => ({
@@ -45,24 +42,29 @@ class IndicatorForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      indicator: props.indicator || {
+      indicator: props.edited || {
         code: "",
-        label: "",
+        name: "",
         description: "",
+        calculationMethod: "",
         module: "",
-        method: CALCULATION_METHODS.AUTOMATIC,
-        type: INDICATOR_TYPES[0],
+        method: "AUTOMATIQUE",
+        type: "QUANTITATIVE",
         target: 0,
-        value: 0,
+        value: null,
         unit: "",
         formula: "",
-        status: INDICATOR_STATUS[0],
+        status: "BROUILLON",
       },
       isSaved: false,
     };
   }
 
   componentDidUpdate(prevProps) {
+    if (prevProps.edited !== this.props.edited && this.props.edited) {
+      this.setState({ indicator: this.props.edited });
+    }
+
     if (prevProps.submittingMutation && !this.props.submittingMutation) {
       this.props.journalize(this.props.mutation);
     }
@@ -75,37 +77,47 @@ class IndicatorForm extends Component {
     }));
   };
 
+  capitalizeFirstLetter = (str) => {
+      if (!str) {
+        return "";
+      }
+      const firstLetter = str.charAt(0).toUpperCase();
+      const restOfWord = str.slice(1).toLowerCase();
+      return firstLetter + restOfWord;
+    }
+
   save = () => {
     const { indicator } = this.state;
-    if (indicator.id) {
-      this.props.updateIndicator(indicator, `Updated indicator ${indicator.code}`);
+    const payload = { ...indicator };
+
+    if (payload.id) {
+      this.props.updateIndicator(payload, `Updated indicator ${payload.code}`);
     } else {
-      this.props.createIndicator(indicator, `Created indicator ${indicator.code}`);
+      const category = this.props.category == 'pip' ? 'PIP' : 'RESULT_FRAMEWORK';
+      payload.category = category;
+      this.props.createIndicator(payload, `Created indicator ${payload.code}`);
     }
+
     this.setState({ isSaved: true });
   };
 
   render() {
-    const { classes } = this.props;
+    const { intl, classes } = this.props;
     const { indicator, isSaved } = this.state;
-    const isManual = indicator.method === CALCULATION_METHODS.MANUAL;
+    const isManual = indicator.method === "MANUEL";
 
     return (
       <div className={classes.page}>
         <Grid container>
           <Grid item xs={12}>
             <Paper className={classes.paper}>
-              {/* === Section Informations de base === */}
+              {/* === Informations de base === */}
               <Grid container className={classes.tableTitle}>
-                <Grid item xs={8}>
-                  <Typography>
-                    <FormattedMessage
-                      module={MODULE_NAME}
-                      id="indicator.basicInfo"
-                      defaultMessage="Basic information"
-                    />
-                  </Typography>
-                </Grid>
+                  <Grid item xs={8} className={classes.tableTitle}>
+                    <Typography>
+                      <FormattedMessage module={MODULE_NAME} id="indicator.basicInfo" />
+                    </Typography>
+                  </Grid>
               </Grid>
 
               <Grid container className={classes.item}>
@@ -113,7 +125,7 @@ class IndicatorForm extends Component {
                 <Grid item xs={3} className={classes.item}>
                   <TextInput
                     module={MODULE_NAME}
-                    label={<FormattedMessage module={MODULE_NAME} id="indicator.code" />}
+                    label={formatMessage(intl, MODULE_NAME, "indicator.code")}
                     value={indicator.code}
                     onChange={(v) => this.updateField("code", v)}
                     required
@@ -121,23 +133,23 @@ class IndicatorForm extends Component {
                   />
                 </Grid>
 
-                {/* Label */}
-                <Grid item xs={3} className={classes.item}>
+                {/* Nom */}
+                <Grid item xs={9} className={classes.item}>
                   <TextInput
                     module={MODULE_NAME}
-                    label={<FormattedMessage module={MODULE_NAME} id="indicator.label" />}
-                    value={indicator.label}
-                    onChange={(v) => this.updateField("label", v)}
+                    label={formatMessage(intl, MODULE_NAME, "indicator.label")}
+                    value={indicator.name}
+                    onChange={(v) => this.updateField("name", v)}
                     required
                     readOnly={isSaved}
                   />
                 </Grid>
 
                 {/* Description */}
-                <Grid item xs={6} className={classes.item}>
+                <Grid item xs={12} className={classes.item}>
                   <TextInput
                     module={MODULE_NAME}
-                    label={<FormattedMessage module={MODULE_NAME} id="indicator.description" />}
+                    label={formatMessage(intl, MODULE_NAME, "indicator.description")}
                     value={indicator.description}
                     onChange={(v) => this.updateField("description", v)}
                     multiline
@@ -145,136 +157,165 @@ class IndicatorForm extends Component {
                   />
                 </Grid>
 
+                {/* Calculation method */}
+                <Grid item xs={12} className={classes.item}>
+                  <TextInput
+                    module={MODULE_NAME}
+                    label={formatMessage(intl, MODULE_NAME, "indicator.calculationMethod")}
+                    value={indicator.calculationMethod}
+                    onChange={(v) => this.updateField("calculationMethod", v)}
+                    multiline
+                    readOnly={isSaved}
+                  />
+                </Grid>
+
                 {/* Module */}
+                <ControlledField
+                  module={MODULE_NAME}
+                  id="indicatorFilter.module"
+                  field={
+                    <Grid item xs={3} className={classes.item}>
+                      <PublishedComponent
+                        pubRef="monitoringEvaluation.ModulePicker"
+                        withNull
+                        label="indicator.module"
+                        value={indicator.module}
+                        onChange={(v) =>this.updateField("module", v)}
+                        readOnly={isSaved}
+                      />
+                    </Grid>
+                  }
+                />
+
+                {/* Méthode */}
+                <ControlledField
+                  module={MODULE_NAME}
+                  id="indicatorFilter.method"
+                  field={
+                    <Grid item xs={3} className={classes.item}>
+                      <PublishedComponent
+                        pubRef="monitoringEvaluation.CalculationMethodPicker"
+                        withNull
+                        label="indicator.method"
+                        value={indicator.method}
+                        required
+                        onChange={(v) =>this.updateField("method", v)}
+                        disabled={isSaved}
+                      />
+                    </Grid>
+                  }
+                />
+
+                {/* Type */}
+                <ControlledField
+                  module={MODULE_NAME}
+                  id="indicatorFilter.type"
+                  field={
+                    <Grid item xs={3} className={classes.item}>
+                      <PublishedComponent
+                        pubRef="monitoringEvaluation.IndicatorTypePicker"
+                        withNull
+                        label="indicator.type"
+                        value={indicator.type}
+                        onChange={(v) => this.updateField("type", v)}
+                        disabled={isSaved}
+                        required
+                      />
+                    </Grid>
+                  }
+                />
+
+                {/* Status */}
+                <ControlledField
+                  module={MODULE_NAME}
+                  id="indicatorFilter.status"
+                  field={
+                    <Grid item xs={3} className={classes.item}>
+                      <PublishedComponent
+                        pubRef="monitoringEvaluation.IndicatorStatusPicker"
+                        withNull
+                        label="indicator.status"
+                        value={indicator.status}
+                        onChange={(v) => this.updateField("status", v)}
+                        disabled={isSaved}
+                        required
+                      />
+                    </Grid>
+                  }
+                />
+
+                {/* Frequency */}
+                <ControlledField
+                  module={MODULE_NAME}
+                  id="indicatorFilter.frequency"
+                  field={
+                    <Grid item xs={3} className={classes.item}>
+                      <PublishedComponent
+                        pubRef="monitoringEvaluation.FrequencyPicker"
+                        withNull
+                        label="indicator.frequency"
+                        value={this.capitalizeFirstLetter(indicator.frequency)}
+                        onChange={(v) => this.updateField("frequency", this.capitalizeFirstLetter(v))}
+                        disabled={isSaved}
+                        required
+                      />
+                    </Grid>
+                  }
+                />
+
+              </Grid>
+
+              <Divider />
+
+              {/* === Valeurs & Calcul === */}
+              <Grid container className={classes.tableTitle}>
+                  <Grid item xs={8} className={classes.tableTitle}>
+                    <Typography>
+                      <FormattedMessage module={MODULE_NAME} id="indicator.computation" />
+                    </Typography>
+                  </Grid>
+              </Grid>
+
+              <Grid container className={classes.item}>
+                {/* Cible */}
                 <Grid item xs={3} className={classes.item}>
                   <TextInput
                     module={MODULE_NAME}
-                    label={<FormattedMessage module={MODULE_NAME} id="indicator.module" />}
-                    value={indicator.module}
-                    onChange={(v) => this.updateField("module", v)}
+                    label={formatMessage(intl, MODULE_NAME, "indicator.target")}
+                    value={indicator.target}
+                    onChange={(v) => this.updateField("target", parseFloat(v) || 0)}
+                    type="number"
                     required
                     readOnly={isSaved}
                   />
                 </Grid>
 
-                {/* Méthode */}
-                <Grid item xs={3} className={classes.item}>
-                  <FormControl fullWidth>
-                    <InputLabel>
-                      <FormattedMessage module={MODULE_NAME} id="indicator.method" />
-                    </InputLabel>
-                    <Select
-                      value={indicator.method}
-                      onChange={(e) => this.updateField("method", e.target.value)}
-                      disabled={isSaved}
-                    >
-                      <MenuItem value="AUTOMATIC">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.automatic" />
-                      </MenuItem>
-                      <MenuItem value="MANUAL">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.manual" />
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Type */}
-                <Grid item xs={3} className={classes.item}>
-                  <FormControl fullWidth>
-                    <InputLabel>
-                      <FormattedMessage module={MODULE_NAME} id="indicator.type" />
-                    </InputLabel>
-                    <Select
-                      value={indicator.type}
-                      onChange={(e) => this.updateField("type", e.target.value)}
-                      disabled={isSaved}
-                    >
-                      <MenuItem value="Quantitative">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.quantitative" />
-                      </MenuItem>
-                      <MenuItem value="Qualitative">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.qualitative" />
-                      </MenuItem>
-                      <MenuItem value="Composite">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.composite" />
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Statut */}
-                <Grid item xs={3} className={classes.item}>
-                  <FormControl fullWidth>
-                    <InputLabel>
-                      <FormattedMessage module={MODULE_NAME} id="indicator.status" />
-                    </InputLabel>
-                    <Select
-                      value={indicator.status}
-                      onChange={(e) => this.updateField("status", e.target.value)}
-                      disabled={isSaved}
-                    >
-                      <MenuItem value="DRAFT">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.draft" />
-                      </MenuItem>
-                      <MenuItem value="ACTIVE">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.active" />
-                      </MenuItem>
-                      <MenuItem value="INACTIVE">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.inactive" />
-                      </MenuItem>
-                      <MenuItem value="ARCHIVED">
-                        <FormattedMessage module={MODULE_NAME} id="indicator.archived" />
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-
-              <Divider />
-
-              {/* === Section Valeurs & Calcul === */}
-              <Grid container className={classes.tableTitle}>
-                <Grid item xs={8}>
-                  <Typography>
-                    <FormattedMessage
-                      module={MODULE_NAME}
-                      id="indicator.computation"
-                      defaultMessage="Values & Computation"
-                    />
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              <Grid container className={classes.item}>
-                {/* Target */}
-                <Grid item xs={3} className={classes.item}>
-                  <TextInput
-                    module={MODULE_NAME}
-                    label={<FormattedMessage module={MODULE_NAME} id="indicator.target" />}
-                    value={indicator.target}
-                    onChange={(v) => this.updateField("target", parseFloat(v) || 0)}
-                    type="number"
-                    readOnly={isSaved}
-                  />
-                </Grid>
 
                 {/* Unit */}
-                <Grid item xs={3} className={classes.item}>
-                  <TextInput
-                    module={MODULE_NAME}
-                    label={<FormattedMessage module={MODULE_NAME} id="indicator.unit" />}
-                    value={indicator.unit}
-                    onChange={(v) => this.updateField("unit", v)}
-                    readOnly={isSaved}
-                  />
-                </Grid>
+                <ControlledField
+                  module={MODULE_NAME}
+                  id="indicatorFilter.unit"
+                  field={
+                    <Grid item xs={3} className={classes.item}>
+                      <PublishedComponent
+                        pubRef="monitoringEvaluation.UnitPicker"
+                        withNull
+                        label="indicator.unit"
+                        value={this.capitalizeFirstLetter(indicator.unit)}
+                        onChange={(v) => this.updateField("unit", this.capitalizeFirstLetter(v))}
+                        disabled={isSaved}
+                        required
+                      />
+                    </Grid>
+                  }
+                />
 
-                {/* Valeur (si manuel) */}
-                {isManual && (
+                {/* Valeur (manuel) */}
+                {indicator.method === "MANUEL" && (
                   <Grid item xs={3} className={classes.item}>
                     <TextInput
                       module={MODULE_NAME}
-                      label={<FormattedMessage module={MODULE_NAME} id="indicator.value" />}
+                      label={formatMessage(intl, MODULE_NAME, "indicator.value")}
                       value={indicator.value}
                       onChange={(v) => this.updateField("value", parseFloat(v) || 0)}
                       type="number"
@@ -283,12 +324,12 @@ class IndicatorForm extends Component {
                   </Grid>
                 )}
 
-                {/* Formule (si automatique) */}
-                {!isManual && (
+                {/* Formule (automatique) */}
+                {indicator.method === "AUTOMATIQUE" && (
                   <Grid item xs={6} className={classes.item}>
                     <TextInput
                       module={MODULE_NAME}
-                      label={<FormattedMessage module={MODULE_NAME} id="indicator.formula" />}
+                      label={formatMessage(intl, MODULE_NAME, "indicator.formula")}
                       value={indicator.formula}
                       onChange={(v) => this.updateField("formula", v)}
                       multiline
@@ -298,12 +339,21 @@ class IndicatorForm extends Component {
                 )}
               </Grid>
 
-              {/* Bouton sauvegarde */}
+              {/* Bouton de sauvegarde */}
               <Grid container justifyContent="flex-end" className={classes.item}>
                 <IconButton
                   color="primary"
                   onClick={this.save}
-                  disabled={!indicator.code || !indicator.label || !indicator.method || isSaved}
+                  disabled={
+                    !indicator.code ||
+                    !indicator.name ||
+                    !indicator.method ||
+                    !indicator.type ||
+                    !indicator.status ||
+                    !indicator.frequency ||
+                    !indicator.description ||
+                    isSaved
+                  }
                 >
                   <Save />
                 </IconButton>
@@ -324,6 +374,11 @@ const mapStateToProps = (state) => ({
 const mapDispatchToProps = (dispatch) =>
   bindActionCreators({ createIndicator, updateIndicator, journalize }, dispatch);
 
+
 export default withModulesManager(
-  injectIntl(withTheme(withStyles(styles)(connect(mapStateToProps, mapDispatchToProps)(IndicatorForm))))
+  withHistory(
+    connect(mapStateToProps, mapDispatchToProps)(
+      injectIntl(withTheme(withStyles(styles)(IndicatorForm)))
+    )
+  )
 );

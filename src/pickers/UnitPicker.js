@@ -2,15 +2,15 @@
 import React, { Component } from 'react';
 import { ConstantBasedPicker } from '@openimis/fe-core';
 
-import { INDICATOR_TYPES, MODULE_NAME } from '../constants';
+import { UNIT_TYPES, MODULE_NAME } from '../constants';
 
-class IndicatorTypePicker extends Component {
+class UnitPicker extends Component {
   render() {
     const { intl, readOnly = false } = this.props;
 
     return (
       <ConstantBasedPicker
-        constants={INDICATOR_TYPES}
+        constants={UNIT_TYPES}
         readOnly={readOnly}
         {...this.props}
       />
@@ -18,4 +18,4 @@ class IndicatorTypePicker extends Component {
   }
 }
 
-export default IndicatorTypePicker;
+export default UnitPicker;

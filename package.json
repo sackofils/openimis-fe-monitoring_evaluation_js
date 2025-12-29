@@ -44,6 +44,9 @@
     "dist"
   ],
   "dependencies": {
+    "chart.js": "2.9.4",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
     "react-to-print": "^2.15.1"
   }
 }

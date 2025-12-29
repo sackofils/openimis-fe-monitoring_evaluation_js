@@ -1,38 +1,21 @@
-/* eslint-disable react/destructuring-assignment */
-import React from "react";
-import { injectIntl } from "react-intl";
-import { SelectInput } from "@openimis/fe-core";
-import { MODULE_NAME } from "../constants";
+/* eslint-disable react/jsx-props-no-spreading */
+import React, { Component } from 'react';
+import { ConstantBasedPicker } from '@openimis/fe-core';
 
-const IndicatorStatusPicker = (props) => {
-  const { intl, value, onChange, readOnly, withNull = true } = props;
+import { INDICATOR_STATUSES, MODULE_NAME } from '../constants';
 
-  const options = [
-    {
-      value: "ACTIVE",
-      label: intl.formatMessage({ id: `${MODULE_NAME}.indicator.status.active`, defaultMessage: "Actif" }),
-    },
-    {
-      value: "INACTIVE",
-      label: intl.formatMessage({ id: `${MODULE_NAME}.indicator.status.inactive`, defaultMessage: "Inactif" }),
-    },
-    {
-      value: "ARCHIVED",
-      label: intl.formatMessage({ id: `${MODULE_NAME}.indicator.status.archived`, defaultMessage: "Archivé" }),
-    },
-  ];
+class IndicatorStatusPicker extends Component {
+  render() {
+    const { intl, readOnly = false } = this.props;
 
-  return (
-    <SelectInput
-      module={MODULE_NAME}
-      label={intl.formatMessage({ id: `${MODULE_NAME}.indicator.status`, defaultMessage: "Statut" })}
-      options={options}
-      value={value}
-      onChange={onChange}
-      readOnly={readOnly}
-      withNull={withNull}
-    />
-  );
-};
+    return (
+      <ConstantBasedPicker
+        constants={INDICATOR_STATUSES}
+        readOnly={readOnly}
+        {...this.props}
+      />
+    );
+  }
+}
 
-export default injectIntl(IndicatorStatusPicker);
+export default IndicatorStatusPicker;

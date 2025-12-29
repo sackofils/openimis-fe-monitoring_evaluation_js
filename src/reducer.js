@@ -7,10 +7,9 @@ import {
   dispatchMutationReq,
   dispatchMutationResp,
   dispatchMutationErr,
-  REQUEST,
-  SUCCESS,
-  ERROR,
 } from "@openimis/fe-core";
+
+import { CLEAR, ERROR, REQUEST, SUCCESS } from "./utils/action-type";
 
 /**
  * === CONSTANTES D’ACTION ===
@@ -29,6 +28,11 @@ export const ACTION_TYPES = {
   RECALC_ERROR: "RECALC_ERROR",
   EXPORT_INDICATORS: "EXPORT_INDICATORS",
   MUTATION: "MONITORING_MUTATION",
+
+  CREATE_MANUAL_INDICATOR_VALUE: "CREATE_MANUAL_INDICATOR_VALUE",
+  UPDATE_MANUAL_INDICATOR_VALUE: "UPDATE_MANUAL_INDICATOR_VALUE",
+  DELETE_MANUAL_INDICATOR_VALUE: "DELETE_MANUAL_INDICATOR_VALUE",
+  VALIDATE_MANUAL_INDICATOR_VALUE: "VALIDATE_MANUAL_INDICATOR_VALUE",
 };
 
 // === ÉTAT INITIAL ===
@@ -63,7 +67,7 @@ const initialState = {
 };
 
 // === REDUCER PRINCIPAL ===
-export function monitoringReducer(state = initialState, action) {
+export function reducer(state = initialState, action) {
   switch (action.type) {
     // === LISTE DES INDICATEURS ==========================================
     case REQUEST(ACTION_TYPES.FETCH_INDICATORS):
@@ -103,6 +107,7 @@ export function monitoringReducer(state = initialState, action) {
       };
 
     case SUCCESS(ACTION_TYPES.FETCH_INDICATOR):
+      console.log('action', parseData(action.payload.data.indicators)?.[0]);
       return {
         ...state,
         fetchingIndicator: false,
@@ -139,16 +144,19 @@ export function monitoringReducer(state = initialState, action) {
       return dispatchMutationResp(state, "duplicateIndicator", action);
 
     // === MISE À JOUR VALEUR MANUELLE =====================================
-    case SUCCESS(ACTION_TYPES.UPDATE_MANUAL_INDICATOR):
-      return {
-        ...dispatchMutationResp(state, "updateManualIndicatorValue", action),
-        indicator: {
-          ...state.indicator,
-          value:
-            action.payload?.data?.updateManualIndicatorValue?.value ??
-            state.indicator?.value,
-        },
-      };
+    case SUCCESS(ACTION_TYPES.CREATE_MANUAL_INDICATOR_VALUE):
+      return dispatchMutationResp(state, "createManualIndicatorValue", action);
+
+    case SUCCESS(ACTION_TYPES.UPDATE_MANUAL_INDICATOR_VALUE):
+      return dispatchMutationResp(state, "updateManualIndicatorValue", action);
+
+    case SUCCESS(ACTION_TYPES.DELETE_MANUAL_INDICATOR_VALUE):
+      const result = dispatchMutationResp(state, "deleteManualIndicatorValue", action);
+      console.log('result', result);
+      return result;
+
+    case SUCCESS(ACTION_TYPES.VALIDATE_MANUAL_INDICATOR_VALUE):
+      return dispatchMutationResp(state, "validateManualIndicatorValue", action);
 
     // === RECALCUL DES INDICATEURS =======================================
     case REQUEST(ACTION_TYPES.RECALC_REQUEST):
@@ -221,4 +229,4 @@ export function monitoringReducer(state = initialState, action) {
   }
 }
 
-export default monitoringReducer;
+export default reducer;

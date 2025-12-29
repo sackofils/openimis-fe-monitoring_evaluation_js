@@ -1,13 +1,14 @@
 /* eslint-disable max-len */
 import {
   graphql,
+  decodeId,
   formatMutation,
-  formatPageQueryWithCount,
-  REQUEST,
-  SUCCESS,
-  ERROR,
+  formatPageQueryWithCount
 } from "@openimis/fe-core";
-import { ACTION_TYPES } from "./reducers/monitoringReducer";
+import { ACTION_TYPES } from "./reducer";
+
+import { isBase64Encoded } from "./utils/utils";
+import { CLEAR, ERROR, REQUEST, SUCCESS } from "./utils/action-type";
 
 /**
  * === ACTIONS: Monitoring & Evaluation ===
@@ -16,65 +17,146 @@ import { ACTION_TYPES } from "./reducers/monitoringReducer";
  */
 
 // === 1. Liste des indicateurs ===
-export function fetchIndicators(periodStart, periodEnd, modules = []) {
-  const filters = [];
-  if (periodStart) filters.push(`periodStart: "${periodStart}"`);
-  if (periodEnd) filters.push(`periodEnd: "${periodEnd}"`);
-  if (modules?.length) filters.push(`modules: [${modules.map((m) => `"${m}"`).join(", ")}]`);
-
+export function fetchIndicators(modulesManager, params = []) {
   const projections = [
     "id",
-    "uuid",
     "code",
-    "label",
+    "name",
     "description",
+    "calculationMethod",
+    "category",
+    "type",
     "module",
     "method",
-    "value",
-    "target",
     "unit",
-    "formula",
-    "lastComputedAt",
-    "updatedAt",
-    "updatedBy",
+    "frequency",
+    "lastValue",
+    "lastUpdatedDate",
+    `value {
+      id
+      period
+      value
+      periodStart
+      periodEnd
+      validated
+      source
+      displayValue
+    }`,
+    `values {
+      id
+      period
+      value
+      periodStart
+      periodEnd
+      regionCode
+      gender
+      validated
+      source
+      displayValue
+    }
+    `,
+    "target",
+    "status",
+    "dateUpdated",
   ];
 
-  const query = formatPageQueryWithCount("indicators", filters, projections);
-  return graphql(query, "MONITORING_INDICATORS");
+  const query = formatPageQueryWithCount("indicators", params, projections);
+
+  return graphql(query, "FETCH_INDICATORS", {
+    actionType: ACTION_TYPES.FETCH_INDICATORS,
+  });
 }
+
 
 // === 2. Détail d’un indicateur ===
 export function fetchIndicator(idOrUuid) {
-  const filters = [idOrUuid.includes("-") ? `uuid: "${idOrUuid}"` : `id: "${idOrUuid}"`];
+  const filters = [idOrUuid.includes("-") ? `id: "${idOrUuid}"` : `id: "${idOrUuid}"`];
   const projections = [
     "id",
-    "uuid",
+    // "uuid",
     "code",
-    "label",
+    "name",
     "description",
+    "calculationMethod",
     "module",
     "method",
-    "value",
+    "category",
+    "status",
+    "type",
+    "frequency",
+    "lastValue",
+    "lastUpdatedDate",
+    `value {
+      id
+      period
+      value
+      periodStart
+      periodEnd
+      validated
+      source
+      displayValue
+    }`,
+    `values {
+      id
+      period
+      value
+      periodStart
+      periodEnd
+      regionCode
+      gender
+      validated
+      source
+      displayValue
+    }
+    `,
     "target",
     "unit",
     "formula",
+    "dateUpdated"
   ];
   const query = formatPageQueryWithCount("indicators", filters, projections);
-  return graphql(query, "MONITORING_INDICATOR_DETAIL");
+  return graphql(query, "FETCH_INDICATOR", {
+    actionType: ACTION_TYPES.FETCH_INDICATOR,
+  });
 }
 
 // === 3. Créer un indicateur ===
 export function createIndicator(indicator, clientMutationLabel = "create indicator") {
-  const input = `
-    code: "${indicator.code}"
-    label: "${indicator.label}"
-    description: "${indicator.description || ""}"
-    module: "${indicator.module}"
-    method: "${indicator.method}"
-    formula: ${indicator.formula ? `"${indicator.formula}"` : null}
-    target: ${indicator.target || 0}
-    unit: "${indicator.unit || ""}"
-  `;
+  const fields = [];
+
+  // --- Champs obligatoires ---
+  fields.push(`code: "${indicator.code}"`);
+  fields.push(`name: "${indicator.name}"`);
+  fields.push(`description: "${indicator.description || ""}"`);
+  fields.push(`type: "${indicator.type}"`);
+  fields.push(`unit: "${indicator.unit}"`);
+  fields.push(`frequency: "${indicator.frequency}"`);
+  fields.push(`status: "${indicator.status}"`);
+  fields.push(`method: "${indicator.method}"`);
+  fields.push(`category: "${indicator.category}"`);
+  fields.push(`target: ${indicator.target || 0}`);
+
+  // --- Champs optionnels ---
+  if (indicator.calculationMethod) {
+    fields.push(`calculationMethod: "${indicator.calculationMethod}"`);
+  }
+
+  if (indicator.formula) {
+    fields.push(`formula: "${indicator.formula}"`);
+  }
+
+  // --- Module uniquement si renseigné ---
+  if (indicator.module && indicator.module !== "") {
+    fields.push(`module: "${indicator.module.toLowerCase()}"`);
+  }
+
+  // --- Nouveaux champs demandés ---
+  // Valeurs par défaut = false & true si empty
+  fields.push(`isAutomatic: ${indicator.isAutomatic ? "true" : "false"}`);
+  fields.push(`isActive: ${indicator.isActive !== false ? "true" : "false"}`);
+
+  const input = fields.join("\n");
+
   const mutation = formatMutation("createIndicator", input, clientMutationLabel);
   const requestedDateTime = new Date();
 
@@ -85,23 +167,53 @@ export function createIndicator(indicator, clientMutationLabel = "create indicat
       SUCCESS(ACTION_TYPES.CREATE_INDICATOR),
       ERROR(ACTION_TYPES.MUTATION),
     ],
-    { clientMutationId: mutation.clientMutationId, clientMutationLabel, requestedDateTime },
+    {
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    }
   );
 }
 
 // === 4. Mettre à jour un indicateur ===
 export function updateIndicator(indicator, clientMutationLabel = "update indicator") {
-  const input = `
-    id: "${indicator.id}"
-    code: "${indicator.code}"
-    label: "${indicator.label}"
-    description: "${indicator.description || ""}"
-    module: "${indicator.module}"
-    method: "${indicator.method}"
-    formula: ${indicator.formula ? `"${indicator.formula}"` : null}
-    target: ${indicator.target || 0}
-    unit: "${indicator.unit || ""}"
-  `;
+  const fields = [];
+
+  // --- Identifiant ---
+  fields.push(`id: "${decodeId(indicator.id)}"`);
+
+  // --- Champs obligatoires ---
+  fields.push(`code: "${indicator.code}"`);
+  fields.push(`name: "${indicator.name}"`);
+  fields.push(`description: "${indicator.description || ""}"`);
+  fields.push(`type: "${indicator.type}"`);
+  fields.push(`unit: "${indicator.unit}"`);
+  fields.push(`frequency: "${indicator.frequency}"`);
+  fields.push(`status: "${indicator.status}"`);
+  fields.push(`method: "${indicator.method}"`);
+  fields.push(`category: "${indicator.category}"`);
+  fields.push(`target: ${indicator.target || 0}`);
+
+  // --- Champs optionnels ---
+  if (indicator.calculationMethod) {
+    fields.push(`calculationMethod: "${indicator.calculationMethod}"`);
+  }
+
+  if (indicator.formula) {
+    fields.push(`formula: "${indicator.formula}"`);
+  }
+
+  // module uniquement si non vide
+  if (indicator.module && indicator.module !== "") {
+    fields.push(`module: "${indicator.module.toLowerCase()}"`);
+  }
+
+  // --- Nouveaux champs demandés ---
+  fields.push(`isAutomatic: ${indicator.isAutomatic ? "true" : "false"}`);
+  fields.push(`isActive: ${indicator.isActive !== false ? "true" : "false"}`);
+
+  const input = fields.join("\n");
+
   const mutation = formatMutation("updateIndicator", input, clientMutationLabel);
   const requestedDateTime = new Date();
 
@@ -112,7 +224,11 @@ export function updateIndicator(indicator, clientMutationLabel = "update indicat
       SUCCESS(ACTION_TYPES.UPDATE_INDICATOR),
       ERROR(ACTION_TYPES.MUTATION),
     ],
-    { clientMutationId: mutation.clientMutationId, clientMutationLabel, requestedDateTime },
+    {
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    }
   );
 }
 
@@ -128,7 +244,11 @@ export function deleteIndicator(id, clientMutationLabel = "delete indicator") {
       SUCCESS(ACTION_TYPES.DELETE_INDICATOR),
       ERROR(ACTION_TYPES.MUTATION),
     ],
-    { clientMutationId: mutation.clientMutationId, clientMutationLabel, requestedDateTime },
+    {
+        clientMutationId: mutation.clientMutationId,
+        clientMutationLabel,
+        requestedDateTime
+    },
   );
 }
 
@@ -193,13 +313,45 @@ export function fetchIndicatorRuns(periodStart, periodEnd) {
   return graphql(query, "MONITORING_INDICATOR_RUNS");
 }
 
-// === 9. Mettre à jour la valeur d’un indicateur manuel ===
-export function updateManualIndicatorValue(indicatorId, value, period, clientMutationLabel = "update manual indicator value") {
+// === CREATE MANUAL INDICATOR VALUE ===
+export function createManualIndicatorValue(obj, clientMutationLabel = "create manual indicator value") {
   const input = `
-    id: "${indicatorId}"
-    value: ${value}
-    period: "${period}"
+    indicatorId: "${decodeId(obj.indicatorId)}",
+    value: ${obj.value},
+    periodStart: "${obj.periodStart}",
+    periodEnd: "${obj.periodEnd}",
+    source: "${obj.source}"
   `;
+
+  const mutation = formatMutation("createManualIndicatorValue", input, clientMutationLabel);
+  const requestedDateTime = new Date();
+
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPES.MUTATION),
+      SUCCESS(ACTION_TYPES.CREATE_MANUAL_INDICATOR_VALUE),
+      ERROR(ACTION_TYPES.MUTATION),
+    ],
+    {
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime
+      // indicatorId: obj.indicatorId,
+    }
+  );
+}
+
+// === UPDATE MANUAL INDICATOR VALUE ===
+export function updateManualIndicatorValue(obj, clientMutationLabel = "update manual indicator value") {
+  const input = `
+    id: "${decodeId(obj.id)}",
+    value: ${obj.value},
+    periodStart: "${obj.periodStart}",
+    periodEnd: "${obj.periodEnd}",
+    source: "${obj.source}"
+  `;
+
   const mutation = formatMutation("updateManualIndicatorValue", input, clientMutationLabel);
   const requestedDateTime = new Date();
 
@@ -207,12 +359,68 @@ export function updateManualIndicatorValue(indicatorId, value, period, clientMut
     mutation.payload,
     [
       REQUEST(ACTION_TYPES.MUTATION),
-      SUCCESS(ACTION_TYPES.UPDATE_MANUAL_INDICATOR),
+      SUCCESS(ACTION_TYPES.UPDATE_MANUAL_INDICATOR_VALUE),
       ERROR(ACTION_TYPES.MUTATION),
     ],
-    { clientMutationId: mutation.clientMutationId, clientMutationLabel, requestedDateTime, id: indicatorId },
+    {
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime
+      // id: obj.id,
+    }
   );
 }
+
+// === DELETE MANUAL INDICATOR VALUE ===
+export function deleteManualIndicatorValue(obj, clientMutationLabel = "delete manual indicator value") {
+  const input = `
+    id: "${decodeId(obj.id)}"
+  `;
+
+  const mutation = formatMutation("deleteManualIndicatorValue", input, clientMutationLabel);
+  const requestedDateTime = new Date();
+
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPES.MUTATION),
+      SUCCESS(ACTION_TYPES.DELETE_MANUAL_INDICATOR_VALUE),
+      ERROR(ACTION_TYPES.MUTATION),
+    ],
+    {
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+      id: obj.id,
+    }
+  );
+}
+
+// === VALIDATE MANUAL INDICATOR VALUE ===
+export function validateManualIndicatorValue(obj, clientMutationLabel = "validate manual indicator value") {
+  const input = `
+    id: "${decodeId(obj.id)}"
+  `;
+
+  const mutation = formatMutation("validateManualIndicatorValue", input, clientMutationLabel);
+  const requestedDateTime = new Date();
+
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPES.MUTATION),
+      SUCCESS(ACTION_TYPES.VALIDATE_MANUAL_INDICATOR_VALUE),
+      ERROR(ACTION_TYPES.MUTATION),
+    ],
+    {
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+      id: obj.id,
+    }
+  );
+}
+
 
 // === 10. Exporter les indicateurs (téléchargement Excel) ===
 export async function exportIndicators(periodStart, periodEnd, modules = []) {

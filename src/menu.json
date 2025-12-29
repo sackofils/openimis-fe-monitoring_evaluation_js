@@ -1,0 +1,207 @@
+{
+  "menus": [
+    {
+      "position": 1,
+      "id": "SocialProtectionMainMenu",
+      "name": "Protection Sociale",
+      "icon": "HowToReg",
+      "description": "Social Protection",
+      "submenus": [
+        {
+          "position": 4,
+          "id": "individual.api_imports"
+        },
+        {
+          "position": 1,
+          "id": "socialProtection.benefitPlans"
+        },
+        {
+          "position": 2,
+          "id": "individual.individuals"
+        },
+        {
+          "position": 3,
+          "id": "individual.groups"
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "id": "PaymentManagement",
+      "name": "Paiements",
+      "icon": "Payment",
+      "description": "PayrollNameMenu",
+      "submenus": [
+        {
+          "position": 1,
+          "id": "legalAndFinance.paymentPlans"
+        },
+        {
+          "position": 2,
+          "id": "legalAndFinance.paymentCycles"
+        },
+        {
+          "position": 3,
+          "id": "legalAndFinance.paymentPoint"
+        },
+        {
+          "position": 4,
+          "id": "legalAndFinance.payrolls"
+        },
+        {
+          "position": 5,
+          "id": "legalAndFinance.payrollsPending"
+        },
+        {
+          "position": 6,
+          "id": "legalAndFinance.payrollsApproved"
+        },
+        {
+          "position": 7,
+          "id": "legalAndFinance.payrollsReconciled"
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "id": "InvoiceMainMenu",
+      "name": "Factures",
+      "icon": "Receipt",
+      "description": "Invoices & payments",
+      "submenus": [
+        { "position": 1, "id": "legalAndFinance.invoices" },
+        { "position": 2, "id": "legalAndFinance.bills" },
+        { "position": 3, "id": "legalAndFinance.paymentsInvoice" }
+      ]
+    },
+    {
+      "position": 2,
+      "id": "OpenSearchReportsMenu",
+      "name": "Dashboard",
+      "icon": "Dashboard",
+      "description": "Main dashboard",
+      "submenus": [
+        {
+          "position": 1,
+          "id": "openSearch.individualReports"
+        },
+        {
+          "position": 2,
+          "id": "openSearch.groupReports"
+        },
+        {
+          "position": 3,
+          "id": "openSearch.beneficiaryReports"
+        },
+        {
+          "position": 4,
+          "id": "openSearch.grievanceReports"
+        },
+        {
+          "position": 5,
+          "id": "openSearch.invoiceReports"
+        },
+        {
+          "position": 6,
+          "id": "openSearch.paymentReports"
+        },
+        {
+          "position": 7,
+          "id": "openSearch.openSearchConfig"
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "id": "GrievanceMainMenu",
+      "name": "Grievance",
+      "icon": "ConfirmationNumber",
+      "description": "Grievance panel",
+      "submenus": [
+        {
+          "position": 1,
+          "id": "grievance.grievances"
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "id": "MonitoringMainMenu",
+      "name": "Monitoring Evaluation",
+      "icon": "ConfirmationNumber",
+      "description": "Monitoring Evaluation",
+      "submenus": [
+        {
+          "position": 1,
+          "id": "monitoring.dashboard"
+        },
+        {
+          "position": 2,
+          "id": "monitoring.indicators"
+        },
+        {
+          "position": 3,
+          "id": "monitoring.add"
+        },
+        {
+          "position": 4,
+          "id": "menu.monitoring.history"
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "id": "TasksMainMenu",
+      "name": "Tasks Management",
+      "icon": "Assignment",
+      "description": "TasksMainMenu",
+      "submenus": [
+        {
+          "position": 1,
+          "id": "task.allTasks"
+        },
+        {
+          "position": 11,
+          "id": "admin.taskExecutionerGroups"
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "id": "AdministrationMainMenu",
+      "name": "Administration",
+      "icon": "Person",
+      "description": "Administration",
+      "submenus": [
+        {
+          "position": 2,
+          "id": "admin.roleManagement"
+        },
+        {
+          "position": 1,
+          "id": "admin.users"
+        },
+        {
+          "position": 3,
+          "id": "admin.locations"
+        },
+        {
+          "position": 4,
+          "id": "profile.myProfile"
+        },
+        {
+          "position": 5,
+          "id": "profile.changePassword"
+        },
+        {
+          "position": 6,
+          "id": "tools.extracts"
+        },
+        {
+          "position": 7,
+          "id": "tools.registers"
+        }
+      ]
+    }
+  ]
+}
