@@ -69,6 +69,7 @@ class IndicatorSearcher extends Component {
       confirmDelete: null,
       confirmDuplicate: null,
       snackbar: { open: false, message: "", severity: "success" },
+      params: []
     };
 
     this.rowsPerPageOptions = props.modulesManager.getConf(
@@ -96,20 +97,19 @@ class IndicatorSearcher extends Component {
   };
 
   /** CORRECTION : fetch prend les paramètres GraphQL corrects */
-  fetch = (params) => {
+  fetch = (params = []) => {
       const { category } = this.props;
-
       const finalParams = [...params];
-
       if (category) {
         finalParams.push(`category: "${category}"`);
       }
-
+      this.state.params = finalParams;
       this.props.fetchIndicators(this.props.modulesManager, finalParams);
     };
 
   refetch = () => {
-    this.fetch();
+    console.log('Params', this.state.params);
+    this.fetch(this.state.params);
   };
 
   /** EXACTEMENT comme TicketSearcher */
@@ -182,7 +182,7 @@ class IndicatorSearcher extends Component {
           // this.showSnackbar("Indicateur supprimé avec succès");
           this.setState({ confirmDelete: null });
           // Ici, on rafraîchit la liste des indicateurs
-          this.props.fetchIndicators(this.props.modulesManager, {});
+          this.props.fetchIndicators(this.props.modulesManager, this.state.params);
         })
         .catch(() => {
           this.showSnackbar("Erreur lors de la suppression", "error");
@@ -200,7 +200,7 @@ class IndicatorSearcher extends Component {
         .then(() => {
           // this.showSnackbar(`Indicateur dupliqué sous le code ${newCode}`);
           this.setState({ confirmDuplicate: null });
-          this.props.fetchIndicators(this.props.modulesManager, {});
+          this.props.fetchIndicators(this.props.modulesManager, this.state.params);
         })
         .catch((e) => {
           console.error("Duplication error", e);
@@ -382,7 +382,7 @@ class IndicatorSearcher extends Component {
           FilterPane={({ filters, onChangeFilters }) => (
             <IndicatorFilter filters={filters} onChangeFilters={onChangeFilters} />
           )}
-          exportable={true}
+          exportable={false}
           onDoubleClick={(i) => onDoubleClick(i)}
           enableActionButtons={true}
           searcherActions={[

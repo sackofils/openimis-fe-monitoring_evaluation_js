@@ -15,6 +15,9 @@ import { withTheme, withStyles } from "@material-ui/core/styles";
 import {
   MODULE_NAME,
 } from "../constants";
+import {
+    normalizeEnumValue
+} from "../utils/utils";
 
 const styles = (theme) => ({
   form: { padding: 0 },
@@ -26,6 +29,8 @@ class IndicatorFilter extends Component {
     this.props.onChangeFilters,
     this.props.modulesManager.getConf(MODULE_NAME, "debounceTime", 500)
   );
+
+
 
   _filterValue = (key) => {
     const { filters } = this.props;
@@ -41,7 +46,7 @@ class IndicatorFilter extends Component {
   _enumFilter = (id, v) => ({
     id,
     value: v,
-    filter: v ? `${id}: ${v}` : null,
+    filter: v ? `${id}: ${normalizeEnumValue(v)}` : null,
   });
 
   _dateFilter = (id, op, v) => ({
@@ -104,7 +109,7 @@ class IndicatorFilter extends Component {
                 label="indicator.type"
                 value={this._filterValue("type")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([this._textFilter("type", v)])
+                  this.debouncedOnChangeFilter([this._enumFilter("type", v)])
                 }
               />
             </Grid>
@@ -123,7 +128,7 @@ class IndicatorFilter extends Component {
                 label="indicator.frequency"
                 value={this._filterValue("frequency")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([this._textFilter("frequency", v)])
+                  this.debouncedOnChangeFilter([this._enumFilter("frequency", v)])
                 }
               />
             </Grid>
@@ -142,7 +147,7 @@ class IndicatorFilter extends Component {
                 label="indicator.module"
                 value={this._filterValue("module")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([this._textFilter("module", v)])
+                  this.debouncedOnChangeFilter([this._enumFilter("module", v)])
                 }
               />
             </Grid>
@@ -161,7 +166,7 @@ class IndicatorFilter extends Component {
                 label="indicator.unit"
                 value={this._filterValue("unit")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([this._textFilter("unit", v)])
+                  this.debouncedOnChangeFilter([this._enumFilter("unit", v)])
                 }
               />
             </Grid>
@@ -180,7 +185,7 @@ class IndicatorFilter extends Component {
                 label="indicator.method"
                 value={this._filterValue("method")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([this._textFilter("method", v)])
+                  this.debouncedOnChangeFilter([this._enumFilter("method", v)])
                 }
               />
             </Grid>
@@ -199,7 +204,7 @@ class IndicatorFilter extends Component {
                 label="indicator.status"
                 value={this._filterValue("status")}
                 onChange={(v) =>
-                  this.debouncedOnChangeFilter([this._textFilter("status", v)])
+                  this.debouncedOnChangeFilter([this._enumFilter("status", v)])
                 }
               />
             </Grid>
@@ -208,7 +213,7 @@ class IndicatorFilter extends Component {
 
 
 
-        {/* Période début */}
+        {/* Période début
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.periodStart"
@@ -229,7 +234,6 @@ class IndicatorFilter extends Component {
           }
         />
 
-        {/* Période fin */}
         <ControlledField
           module={MODULE_NAME}
           id="indicatorFilter.periodEnd"
@@ -249,6 +253,7 @@ class IndicatorFilter extends Component {
             </Grid>
           }
         />
+        */}
       </Grid>
     );
   }

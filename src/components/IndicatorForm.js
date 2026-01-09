@@ -200,7 +200,7 @@ class IndicatorForm extends Component {
                         value={indicator.method}
                         required
                         onChange={(v) =>this.updateField("method", v)}
-                        disabled={isSaved}
+                        readOnly={isSaved}
                       />
                     </Grid>
                   }
@@ -218,7 +218,7 @@ class IndicatorForm extends Component {
                         label="indicator.type"
                         value={indicator.type}
                         onChange={(v) => this.updateField("type", v)}
-                        disabled={isSaved}
+                        readOnly={isSaved}
                         required
                       />
                     </Grid>
@@ -237,7 +237,7 @@ class IndicatorForm extends Component {
                         label="indicator.status"
                         value={indicator.status}
                         onChange={(v) => this.updateField("status", v)}
-                        disabled={isSaved}
+                        readOnly={isSaved}
                         required
                       />
                     </Grid>
@@ -254,9 +254,9 @@ class IndicatorForm extends Component {
                         pubRef="monitoringEvaluation.FrequencyPicker"
                         withNull
                         label="indicator.frequency"
-                        value={this.capitalizeFirstLetter(indicator.frequency)}
-                        onChange={(v) => this.updateField("frequency", this.capitalizeFirstLetter(v))}
-                        disabled={isSaved}
+                        value={indicator.frequency}
+                        onChange={(v) => this.updateField("frequency", v)}
+                        readOnly={isSaved}
                         required
                       />
                     </Grid>
@@ -301,9 +301,9 @@ class IndicatorForm extends Component {
                         pubRef="monitoringEvaluation.UnitPicker"
                         withNull
                         label="indicator.unit"
-                        value={this.capitalizeFirstLetter(indicator.unit)}
-                        onChange={(v) => this.updateField("unit", this.capitalizeFirstLetter(v))}
-                        disabled={isSaved}
+                        value={indicator.unit}
+                        onChange={(v) => this.updateField("unit", v)}
+                        readOnly={isSaved}
                         required
                       />
                     </Grid>
