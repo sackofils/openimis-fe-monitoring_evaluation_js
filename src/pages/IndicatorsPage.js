@@ -61,7 +61,7 @@ class IndicatorsPage extends Component {
           onDoubleClick={this.onDoubleClick}
         />
 
-        {!rights.includes(RIGHT_MONITORING_ADD) && (
+        {rights.includes(RIGHT_MONITORING_ADD) && (
           <Tooltip title={formatMessage(intl, MODULE_NAME, "indicator.addTooltip")}>
             <Fab color="primary" className={classes.fab} onClick={this.handleAddIndicator}>
               <AddIcon />

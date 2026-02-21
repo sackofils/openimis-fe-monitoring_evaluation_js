@@ -19,7 +19,12 @@ import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 
 import { withStyles } from "@material-ui/core/styles";
 import { FormattedMessage } from "react-intl";
-import { MODULE_NAME } from "../constants";
+import {
+    MODULE_NAME,
+    RIGHT_MONITORING_EDIT_VALUE,
+    RIGHT_MONITORING_DELETE_VALUE,
+    RIGHT_MONITORING_VALIDATE_VALUE
+} from "../constants";
 
 const styles = (theme) => ({
   paper: { padding: theme.spacing(2), marginBottom: theme.spacing(3) },
@@ -115,7 +120,7 @@ class IndicatorHistoryPanel extends Component {
   };
 
   render() {
-    const { classes, values = [], onEdit, onDelete, onValidate } = this.props;
+    const { classes, values = [], onEdit, onDelete, onValidate, rights } = this.props;
     const { order, orderBy, rowsPerPage, page } = this.state;
 
     if (!values.length) {
@@ -205,37 +210,43 @@ class IndicatorHistoryPanel extends Component {
                     {!v.validated ? (
                       <>
                         {/* Modifier */}
-                        <Button
-                          size="small"
-                          onClick={() => onEdit && onEdit(v)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </Button>
+                        {rights.includes(RIGHT_MONITORING_EDIT_VALUE) && (
+                            <Button
+                              size="small"
+                              onClick={() => onEdit && onEdit(v)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </Button>
+                        )}
 
                         {/* Supprimer */}
-                        <Button
-                          size="small"
-                          onClick={() => {
-                            if (
-                              window.confirm(
-                                "Voulez-vous vraiment supprimer cette valeur ?"
-                              )
-                            ) {
-                              onDelete && onDelete(v.id);
-                            }
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </Button>
+                        {rights.includes(RIGHT_MONITORING_DELETE_VALUE) && (
+                            <Button
+                              size="small"
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    "Voulez-vous vraiment supprimer cette valeur ?"
+                                  )
+                                ) {
+                                  onDelete && onDelete(v.id);
+                                }
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </Button>
+                        )}
 
                         {/* Valider */}
-                        <Button
-                          size="small"
-                          style={{ color: "green" }}
-                          onClick={() => onValidate && onValidate(v.id)}
-                        >
-                          <CheckCircleIcon fontSize="small" />
-                        </Button>
+                        {rights.includes(RIGHT_MONITORING_VALIDATE_VALUE) && (
+                            <Button
+                              size="small"
+                              style={{ color: "green" }}
+                              onClick={() => onValidate && onValidate(v.id)}
+                            >
+                              <CheckCircleIcon fontSize="small" />
+                            </Button>
+                        )}
                       </>
                     ) : (
                       <Typography style={{ color: "green", fontWeight: 600 }}>

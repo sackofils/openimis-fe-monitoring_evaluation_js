@@ -72,7 +72,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <Assessment />,
       route: `/${ROUTE_DASHBOARD}`,
-      //filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
+      filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
       id: "monitoring.dashboard",
     },
     {
@@ -85,7 +85,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <Assessment />,
       route: `/${ROUTE_INDICATOR_LIST}`,
-      //filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
+      filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
       id: "monitoring.indicators",
     },
     {
@@ -98,7 +98,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <Assessment />,
       route: `/${ROUTE_RESULTS_FRAMEWORK}`,
-      //filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
+      filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
       id: "monitoring.resultFramework",
     },
     {
@@ -111,7 +111,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <AddCircleOutline />,
       route: `/${ROUTE_ADD_INDICATOR}`,
-      //filter: (rights) => rights.includes(RIGHT_MONITORING_ADD),
+      filter: (rights) => rights.includes(RIGHT_MONITORING_ADD),
       id: "monitoring.add",
     },
     {
@@ -124,7 +124,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <HistoryIcon />,
       route: `/${ROUTE_HISTORY}`,
-      //filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
+      filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
       id: "menu.monitoring.history",
     },
   ],

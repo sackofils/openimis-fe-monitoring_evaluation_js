@@ -29,7 +29,7 @@ import {
   journalize
 } from "@openimis/fe-core";
 import { injectIntl } from "react-intl";
-
+//import html2pdf from "html2pdf.js";
 import Skeleton from "@material-ui/lab/Skeleton";
 import PrintIcon from "@material-ui/icons/Print";
 import PictureAsPdfIcon from "@material-ui/icons/PictureAsPdf";
@@ -43,6 +43,10 @@ import {
     deleteManualIndicatorValue,
     validateManualIndicatorValue,
 } from "../actions";
+import {
+    RIGHT_MONITORING_EDIT,
+    RIGHT_MONITORING_ADD_VALUE
+} from "../constants";
 import IndicatorChartPanel from "../panels/IndicatorChartPanel";
 import IndicatorHistoryPanel from "../panels/IndicatorHistoryPanel";
 
@@ -154,12 +158,40 @@ class IndicatorDetailsPage extends Component {
   };
 
   handlePrint = () => {
-    window.print();
-  };
+      if (!this.printRef.current) return;
 
-  handleExportPdf = async () => {
-    // À implémenter si besoin
-  };
+      const printContents = this.printRef.current.innerHTML;
+      const originalContents = document.body.innerHTML;
+
+      document.body.innerHTML = `
+        <html>
+          <head>
+            <title>Indicateur ${this.props.indicator?.code}</title>
+            <style>
+              body {
+                font-family: Roboto, Arial, sans-serif;
+                padding: 20px;
+              }
+              .MuiCard-root {
+                box-shadow: none !important;
+                border: 1px solid #ddd;
+              }
+              .MuiIconButton-root,
+              button {
+                display: none !important;
+              }
+            </style>
+          </head>
+          <body>
+            ${printContents}
+          </body>
+        </html>
+      `;
+
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload(); // important pour React
+    };
 
   openConfirm = (msg, action, payload) => {
       this.setState({
@@ -325,7 +357,7 @@ class IndicatorDetailsPage extends Component {
   }
 
   render() {
-    const { classes, indicator } = this.props;
+    const { classes, indicator, rights } = this.props;
 
     // Skeleton pendant le chargement
     if (!indicator || !indicator.id) {
@@ -368,13 +400,15 @@ class IndicatorDetailsPage extends Component {
             </Typography>
           </Grid>
 
-          <Grid item>
-            <Tooltip title="Modifier">
-              <IconButton color="primary" onClick={this.goToEdit}>
-                <Edit />
-              </IconButton>
-            </Tooltip>
-          </Grid>
+          {rights.includes(RIGHT_MONITORING_EDIT) && (
+              <Grid item>
+                <Tooltip title="Modifier">
+                  <IconButton color="primary" onClick={this.goToEdit}>
+                    <Edit />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+          )}
 
           <Grid item>
             <Tooltip title="Imprimer">
@@ -384,13 +418,6 @@ class IndicatorDetailsPage extends Component {
             </Tooltip>
           </Grid>
 
-          <Grid item>
-            <Tooltip title="Exporter en PDF">
-              <IconButton onClick={this.handleExportPdf}>
-                <PictureAsPdfIcon />
-              </IconButton>
-            </Tooltip>
-          </Grid>
         </Grid>
 
         <Divider style={{ margin: "1rem 0" }} />
@@ -436,7 +463,7 @@ class IndicatorDetailsPage extends Component {
               <Card className={classes.card}>
                 <div className={classes.band}>
                   Valeurs & Statut
-                  {indicator.method === "MANUEL" && (
+                  {rights.includes(RIGHT_MONITORING_ADD_VALUE) && (
                     <Tooltip title={hasUnvalidated ? "Veuillez valider la valeur en attente avant d’ajouter une nouvelle valeur" : "Ajouter une valeur manuelle"}>
                       <span style={{ float: "right" }}>
                         <IconButton
@@ -555,6 +582,7 @@ class IndicatorDetailsPage extends Component {
 }
 
 const mapStateToProps = (state) => ({
+  rights: state.core?.user?.i_user?.rights || [],
   indicator: state.monitoringEvaluation.indicator || {},
   mutation: state.monitoringEvaluation.mutation,
   submittingMutation: state.monitoringEvaluation.submittingMutation,

@@ -47,6 +47,8 @@ import {
   MODULE_NAME,
   RIGHT_MONITORING_ADD,
   RIGHT_MONITORING_EDIT,
+  RIGHT_MONITORING_DELETE,
+  RIGHT_MONITORING_DUPLICATE,
   RIGHT_MONITORING_RECALCULATE,
 } from "../constants";
 
@@ -246,7 +248,7 @@ class IndicatorSearcher extends Component {
 
   itemFormatters = () => {
     const { selectedIds } = this.state;
-    const { intl } = this.props;
+    const { intl, rights } = this.props;
 
     const formatters = [
     /*
@@ -284,38 +286,44 @@ class IndicatorSearcher extends Component {
       (
         <div style={{ display: "flex", gap: 8 }}>
           {/* Éditer */}
-          <Tooltip title={formatMessage(intl, MODULE_NAME, "indicator.editTooltip")}>
-            <IconButton
-              onClick={() =>
-                historyPush(
-                  this.props.modulesManager,
-                  this.props.history,
-                  "monitoringEvaluation.route.editIndicator",
-                  [decodeId(i.id)],
-                  false
-                )
-              }
-            >
-              <EditIcon />
-            </IconButton>
-          </Tooltip>
+          {rights.includes(RIGHT_MONITORING_EDIT) && (
+              <Tooltip title={formatMessage(intl, MODULE_NAME, "indicator.editTooltip")}>
+                <IconButton
+                  onClick={() =>
+                    historyPush(
+                      this.props.modulesManager,
+                      this.props.history,
+                      "monitoringEvaluation.route.editIndicator",
+                      [decodeId(i.id)],
+                      false
+                    )
+                  }
+                >
+                  <EditIcon />
+                </IconButton>
+              </Tooltip>
+          )}
 
           {/* Dupliquer */}
-          <Tooltip title={formatMessage(intl, MODULE_NAME, "indicator.duplicateTooltip")}>
-            <IconButton onClick={() => this.handleDuplicate(i)}>
-              <FileCopyIcon />
-            </IconButton>
-          </Tooltip>
+          {rights.includes(RIGHT_MONITORING_DUPLICATE) && (
+              <Tooltip title={formatMessage(intl, MODULE_NAME, "indicator.duplicateTooltip")}>
+                <IconButton onClick={() => this.handleDuplicate(i)}>
+                  <FileCopyIcon />
+                </IconButton>
+              </Tooltip>
+          )}
 
           {/* Supprimer */}
-          <Tooltip title={formatMessage(intl, MODULE_NAME, "indicator.deleteTooltip")}>
-            <IconButton
-              onClick={() => this.handleDelete(i)}
-              style={{ color: "red" }}
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Tooltip>
+          {rights.includes(RIGHT_MONITORING_DELETE) && (
+              <Tooltip title={formatMessage(intl, MODULE_NAME, "indicator.deleteTooltip")}>
+                <IconButton
+                  onClick={() => this.handleDelete(i)}
+                  style={{ color: "red" }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+          )}
         </div>
       ),
     ];
