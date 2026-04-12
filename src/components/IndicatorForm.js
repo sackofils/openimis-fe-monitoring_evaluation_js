@@ -284,7 +284,7 @@ class IndicatorForm extends Component {
                     label={formatMessage(intl, MODULE_NAME, "indicator.target")}
                     value={indicator.target}
                     onChange={(v) => this.updateField("target", parseFloat(v) || 0)}
-                    type="number"
+                    type="text"
                     required
                     readOnly={isSaved}
                   />

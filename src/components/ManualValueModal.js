@@ -10,6 +10,7 @@ import {
   Grid,
   Paper,
   Divider,
+  MenuItem,
 } from "@material-ui/core";
 import { withTheme, withStyles } from "@material-ui/core/styles";
 
@@ -38,8 +39,9 @@ function ManualValueModal({
   onSave,
   classes,
 }) {
-  const lastValue = indicator?.last_value ?? null;
+  const lastValue = indicator?.lastValue ?? null;
   const historyValues = indicator?.values?.edges?.map((e) => e.node) ?? [];
+  const unit = (indicator?.unit || "").toLowerCase();
 
   const [value, setValue] = useState("");
   const [periodStart, setPeriodStart] = useState("");
@@ -49,21 +51,23 @@ function ManualValueModal({
     const today = new Date();
     let start, end;
 
-    switch (indicator.frequency) {
+    switch (indicator?.frequency) {
       case "MENSUEL":
         start = new Date(today.getFullYear(), today.getMonth(), 1);
         end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         break;
-      case "TRIMESTRIEL":
+      case "TRIMESTRIEL": {
         const q = Math.floor(today.getMonth() / 3);
         start = new Date(today.getFullYear(), q * 3, 1);
         end = new Date(today.getFullYear(), q * 3 + 3, 0);
         break;
-      case "SEMESTRIEL":
+      }
+      case "SEMESTRIEL": {
         const s = today.getMonth() < 6 ? 0 : 6;
         start = new Date(today.getFullYear(), s, 1);
         end = new Date(today.getFullYear(), s + 6, 0);
         break;
+      }
       case "ANNUEL":
         start = new Date(today.getFullYear(), 0, 1);
         end = new Date(today.getFullYear(), 11, 31);
@@ -82,31 +86,42 @@ function ManualValueModal({
   useEffect(() => {
     if (open) {
       if (editingValue) {
-        setValue(editingValue.value ?? editingValue.qualitativeValue ?? "");
+        if (unit === "oui_non") {
+          setValue(editingValue.qualitativeValue ?? editingValue.value ?? "");
+        } else {
+          setValue(editingValue.value ?? editingValue.qualitativeValue ?? "");
+        }
         setPeriodStart(editingValue.periodStart || "");
         setPeriodEnd(editingValue.periodEnd || "");
       } else {
-        setValue("");
+        setValue(lastValue ?? "");
         computePeriod();
       }
     }
-  }, [open, editingValue]);
+  }, [open, editingValue, unit]);
+
+  const isBooleanUnit = unit === "oui_non";
+  const isNumericUnit = unit === "nombre" || unit === "pourcentage" || unit === 'gnf';
 
   const hasError =
+    isNumericUnit &&
     lastValue !== null &&
-    !editingValue && // règle de cumul seulement pour création
+    !editingValue &&
     value !== "" &&
     parseFloat(value) < parseFloat(lastValue);
 
   const handleSubmit = () => {
-    onSave &&
-      onSave({
-        id: editingValue?.id,
-        value: parseFloat(value),
-        periodStart,
-        periodEnd,
-        source: "Saisie manuelle",
-      });
+    if (!onSave) return;
+
+    const payload = {
+      id: editingValue?.id,
+      value: ((value === "") ? null : parseFloat(value)),
+      periodStart,
+      periodEnd,
+      source: "Saisie manuelle",
+    };
+
+    onSave(payload);
   };
 
   return (
@@ -118,24 +133,52 @@ function ManualValueModal({
       <DialogContent dividers>
         <Typography variant="body1">
           <b>Dernière valeur enregistrée :</b>{" "}
-          {lastValue !== null ? lastValue : "Aucune"}
+          {lastValue !== null
+          ? unit === "oui_non"
+            ? String(lastValue) === "1"
+              ? "Oui"
+              : "Non"
+            : lastValue
+          : "Aucune"}
         </Typography>
 
         <Grid container spacing={2} style={{ marginTop: 15 }}>
           <Grid item xs={12}>
-            <TextField
-              fullWidth
-              type="number"
-              label="Valeur"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              error={hasError}
-              helperText={
-                hasError
-                  ? `La valeur doit être >= ${lastValue}`
-                  : "Saisissez une valeur numérique"
-              }
-            />
+            {isBooleanUnit ? (
+              <TextField
+                select
+                fullWidth
+                label="Valeur"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                helperText="Sélectionnez Oui ou Non"
+              >
+                <MenuItem value="">Sélectionner</MenuItem>
+                <MenuItem value="1">Oui</MenuItem>
+                <MenuItem value="0">Non</MenuItem>
+              </TextField>
+            ) : (
+              <TextField
+                fullWidth
+                type="number"
+                label={unit === "pourcentage" ? "Valeur (%)" : "Valeur"}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                error={hasError}
+                helperText={
+                  hasError
+                    ? `La valeur doit être >= ${lastValue}`
+                    : unit === "pourcentage"
+                    ? "Saisissez un pourcentage"
+                    : "Saisissez une valeur numérique"
+                }
+                inputProps={
+                  unit === "pourcentage"
+                    ? { min: 0, max: 100, step: "any" }
+                    : { step: "any" }
+                }
+              />
+            )}
           </Grid>
 
           <Grid item xs={12} sm={6}>
@@ -169,7 +212,8 @@ function ManualValueModal({
             <Divider style={{ margin: "8px 0 12px 0" }} />
             {historyValues.map((v, i) => (
               <Typography key={i} className={classes.historyItem}>
-                <b>{v.period}</b> : {v.value}
+                <b>{v.period}</b> :{" "}
+                {v.qualitativeValue ?? v.value}
               </Typography>
             ))}
           </Paper>

@@ -479,11 +479,11 @@ class IndicatorDetailsPage extends Component {
                 </div>
                 <CardContent>
                   <Typography className={classes.infoItem}>
-                    <b>Cible :</b> {indicator.target ?? "-"}
+                    <b>Cible :</b> {indicator.unit.toLowerCase() === 'oui_non' ? (String(indicator.target) === '1' ? 'Oui' : 'Non') : indicator.target ?? "-"}
                   </Typography>
 
                   <Typography className={classes.infoItem}>
-                    <b>Valeur actuelle :</b> {indicator.lastValue ?? "-"}
+                    <b>Valeur actuelle :</b> {indicator.unit.toLowerCase() === 'oui_non' ? (String(indicator.lastValue) === '1' ? 'Oui' : 'Non') : indicator.lastValue ?? "-"}
                   </Typography>
 
                   <Typography className={classes.infoItem}>
@@ -500,7 +500,7 @@ class IndicatorDetailsPage extends Component {
                     {indicator.target > 0 && indicator.lastValue >= 0 ? (
                       <React.Fragment>
                         <div className={classes.progressValue}>
-                          {Math.round((indicator.lastValue / indicator.target) * 100)}%
+                          {indicator.unit.toLowerCase() === 'oui_non' ? (String(indicator.lastValue) === '1' ? 100 : 0) : Math.round((indicator.lastValue / indicator.target) * 100)}%
                         </div>
                         <div className={classes.progressLabel}>Progression</div>
                       </React.Fragment>
@@ -527,6 +527,8 @@ class IndicatorDetailsPage extends Component {
             <CardContent>
               <IndicatorHistoryPanel
                   values={values}
+                  rights={rights}
+                  unit={indicator.unit}
                   onEdit={this.handleEditValue}
                   onDelete={this.handleDeleteValue}
                   onValidate={this.handleValidateValue}

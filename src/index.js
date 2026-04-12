@@ -24,8 +24,8 @@ import messages_en from "./translations/en.json";
 import messages_fr from "./translations/fr.json";
 import {
   MODULE_NAME,
+  RIGHT_MONITORING,
   RIGHT_MONITORING_ADD,
-  RIGHT_MONITORING_VIEW,
   MONITORING_MAIN_MENU_CONTRIBUTION_KEY,
 } from "./constants";
 
@@ -72,7 +72,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <Assessment />,
       route: `/${ROUTE_DASHBOARD}`,
-      filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
+      filter: (rights) => rights.includes(RIGHT_MONITORING),
       id: "monitoring.dashboard",
     },
     {
@@ -85,7 +85,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <Assessment />,
       route: `/${ROUTE_INDICATOR_LIST}`,
-      filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
+      filter: (rights) => rights.includes(RIGHT_MONITORING),
       id: "monitoring.indicators",
     },
     {
@@ -98,7 +98,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <Assessment />,
       route: `/${ROUTE_RESULTS_FRAMEWORK}`,
-      filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
+      filter: (rights) => rights.includes(RIGHT_MONITORING),
       id: "monitoring.resultFramework",
     },
     {
@@ -124,7 +124,7 @@ const DEFAULT_CONFIG = {
       ),
       icon: <HistoryIcon />,
       route: `/${ROUTE_HISTORY}`,
-      filter: (rights) => rights.includes(RIGHT_MONITORING_VIEW),
+      filter: (rights) => rights.includes(RIGHT_MONITORING),
       id: "menu.monitoring.history",
     },
   ],

@@ -120,7 +120,7 @@ class IndicatorHistoryPanel extends Component {
   };
 
   render() {
-    const { classes, values = [], onEdit, onDelete, onValidate, rights } = this.props;
+    const { classes, values = [], onEdit, onDelete, onValidate, rights, unit } = this.props;
     const { order, orderBy, rowsPerPage, page } = this.state;
 
     if (!values.length) {
@@ -195,7 +195,11 @@ class IndicatorHistoryPanel extends Component {
                   <TableCell>{v.periodStart}</TableCell>
                   <TableCell>{v.periodEnd}</TableCell>
                   <TableCell>
-                    <b>{v.value ?? v.qualitativeValue ?? "-"}</b>
+                    <b>{
+                        unit.toLowerCase() === "oui_non"
+                            ? String(v.value ?? v.qualitativeValue ?? "-") === "1" ? "Oui" : "Non"
+                                : v.value ?? v.qualitativeValue ?? "-"
+                    }</b>
                   </TableCell>
                   <TableCell>{v.source || "-"}</TableCell>
                   <TableCell

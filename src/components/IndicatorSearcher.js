@@ -198,7 +198,7 @@ class IndicatorSearcher extends Component {
 
       // Le RETURN ici est ESSENTIEL pour que le Dialog sache que c'est async.
       return this.props
-        .duplicateIndicator(id, `Duplicated indicator as ${newCode}`)
+        .duplicateIndicator(id, newCode)
         .then(() => {
           // this.showSnackbar(`Indicateur dupliqué sous le code ${newCode}`);
           this.setState({ confirmDuplicate: null });
@@ -222,6 +222,30 @@ class IndicatorSearcher extends Component {
       this.setState({ recalculating: false });
     }
   };
+
+  getIndicatorProgression = (indicator) => {
+      const unit = (indicator.unit || "").toLowerCase();
+      if (
+        indicator.lastValue === null ||
+        indicator.lastValue === undefined ||
+        indicator.lastValue === ""
+      ) {
+        return null;
+      }
+
+      if (unit === "oui_non") {
+        return Number(indicator.lastValue) === Number(indicator.target) ? 100 : 0;
+      }
+
+      const lastValueNum = Number(indicator.lastValue);
+      const targetNum = Number(indicator.target);
+
+      if (!targetNum || Number.isNaN(lastValueNum) || Number.isNaN(targetNum)) {
+        return null;
+      }
+
+      return Math.max(0, Math.min(100, Math.round((lastValueNum / targetNum) * 100)));
+    };
 
   headers = () => [
     // "",
@@ -269,13 +293,16 @@ class IndicatorSearcher extends Component {
         />
       ),
       // (i) => i.unit,
-      (i) => i.target,
+      (i) => {
+        return i.unit.toLowerCase() === 'oui_non' ? (String(i.target) === '1' ? 'Oui' : 'Non') : i.target;
+      },
       (i) => i.lastValue ?? '-',
       (i) => {
-          if (!i.target || !i.lastValue) return "-";
-          const progression = Math.round((i.lastValue / i.target) * 100);
-          return <MiniDonut value={progression} size={42} stroke={6} />;
-      },
+          const progression = this.getIndicatorProgression(i);
+          return progression === null ? "-" : (
+            <MiniDonut value={progression} size={42} stroke={6} />
+          );
+        },
       (i) => (
         <FormattedMessage module={MODULE_NAME} id={`indicator.${i.status.toLowerCase()}`} />
       ),
