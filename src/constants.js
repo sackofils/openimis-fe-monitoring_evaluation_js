@@ -29,7 +29,7 @@ export const UNIT_TYPES = [
 
 
 // === Droits d’accès (à aligner avec le backend) ===
-export const RIGHT_MONITORING = 128000;
+export const RIGHT_MONITORING = 128001;
 export const RIGHT_MONITORING_VIEW = 128001;
 export const RIGHT_MONITORING_ADD = 128002;
 export const RIGHT_MONITORING_EDIT = 128003;
